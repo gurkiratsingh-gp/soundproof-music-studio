@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">SoundProof shield and waveform logo</title>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0e7566"/>
+      <stop offset="1" stop-color="#08313a"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="18" y1="12" x2="47" y2="53" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#52e0c5"/>
+      <stop offset="1" stop-color="#16a38e"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#071c22"/>
+  <path d="M32 8.5 51 15v14.2c0 12.8-7.5 21.5-19 26.3-11.5-4.8-19-13.5-19-26.3V15l19-6.5Z" fill="url(#bg)" stroke="url(#shield)" stroke-width="2.4"/>
+  <path d="M18.5 32h5l3.4-7.8 5.2 17.4 5-24.2 3.7 14.6h4.7" fill="none" stroke="#f5f2ea" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="41.6" r="1.7" fill="#52e0c5"/>
+</svg>

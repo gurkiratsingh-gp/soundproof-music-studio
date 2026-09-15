@@ -1,0 +1,10 @@
+{
+  "name": "SoundProof — Personal Music Studio",
+  "short_name": "SoundProof",
+  "description": "Create songs, follow synchronized lyrics, record vocals and mix a final track.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071c22",
+  "theme_color": "#0e7566",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

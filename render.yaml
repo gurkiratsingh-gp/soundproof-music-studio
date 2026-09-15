@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: soundproof-music-studio
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: GEMINI_TEXT_MODEL
+        value: gemini-3.5-flash
+      - key: GEMINI_GLOBAL_REQUESTS_PER_HOUR
+        value: "240"
+      # Add optional Google/Apple credentials in Render's Environment page.
+      # Do not commit client secrets or the Apple .p8 key to this file.

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">SoundProof music studio</title>
+  <desc id="desc">SoundProof wordmark beside a teal shield containing an audio waveform.</desc>
+  <defs>
+    <linearGradient id="background" x1="70" y1="20" x2="1120" y2="610" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#071c22"/>
+      <stop offset="0.55" stop-color="#0a2b32"/>
+      <stop offset="1" stop-color="#064d48"/>
+    </linearGradient>
+    <linearGradient id="shieldFill" x1="840" y1="126" x2="1067" y2="524" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35cdb4"/>
+      <stop offset="1" stop-color="#087364"/>
+    </linearGradient>
+    <linearGradient id="wordAccent" x1="470" y1="220" x2="728" y2="316" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#52e0c5"/>
+      <stop offset="1" stop-color="#21b7a0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(953 316) rotate(90) scale(300)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2dd4b7" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#2dd4b7" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#020a0d" flood-opacity=".45"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <circle cx="953" cy="316" r="300" fill="url(#glow)"/>
+  <path d="M0 110c95 0 95 24 190 24s95-24 190-24 95 24 190 24 95-24 190-24" fill="none" stroke="#52e0c5" stroke-opacity=".08" stroke-width="2"/>
+  <path d="M0 507c115 0 115-31 230-31s115 31 230 31 115-31 230-31" fill="none" stroke="#f5f2ea" stroke-opacity=".07" stroke-width="2"/>
+
+  <g transform="translate(82 152)">
+    <g aria-label="SoundProof" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="96" font-weight="750" letter-spacing="-5">
+      <text x="0" y="126" fill="#f5f2ea">Sound</text>
+      <text x="287" y="126" fill="url(#wordAccent)">Proof</text>
+    </g>
+    <rect x="2" y="161" width="72" height="5" rx="2.5" fill="#35cdb4"/>
+    <text x="0" y="213" fill="#b9cdc9" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="500" letter-spacing="1.5">MAKE YOUR SOUND HEARD.</text>
+    <text x="0" y="292" fill="#7fa29c" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="650" letter-spacing="4">CREATE  •  RECORD  •  MIX</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M953 100 1083 145v99c0 121-51 205-130 246-79-41-130-125-130-246v-99l130-45Z" fill="#071c22" stroke="url(#shieldFill)" stroke-width="13"/>
+    <path d="M953 126 1057 162v80c0 101-39 171-104 208-65-37-104-107-104-208v-80l104-36Z" fill="url(#shieldFill)" opacity=".13"/>
+    <path d="M858 286h38l24-60 37 132 36-181 29 109h34" fill="none" stroke="#f5f2ea" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="953" cy="389" r="10" fill="#52e0c5"/>
+  </g>
+
+  <text x="82" y="574" fill="#6f918b" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="3">PERSONAL MUSIC STUDIO</text>
+</svg>

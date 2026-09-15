@@ -1,0 +1,6 @@
+{
+  "name": "SoundProof",
+  "description": "A multilingual music studio that creates instrumentals and lyrics, follows sung references, records vocals, and exports finished mixes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
