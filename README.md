@@ -59,10 +59,13 @@ The startup page always offers **Continue with email**. It uses SoundProof’s e
 ### Google
 
 1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), configure the OAuth consent screen and create an **OAuth client ID > Web application**.
-2. Add the exact authorized redirect URI. For local development use `http://localhost:3000/api/auth/google/callback`. For the deployed app use `https://YOUR-DOMAIN/api/auth/google/callback`.
-3. Set these server-only variables and restart SoundProof:
+2. Configure this deployment's Web application client with **Authorized JavaScript origin** `https://soundproof-music-studio.onrender.com` and **Authorized redirect URI** `https://soundproof-music-studio.onrender.com/api/auth/google/callback`. Enter both exactly, with no trailing slash. For local testing, add `http://localhost:3000/api/auth/google/callback` as another authorized redirect URI.
+3. If the consent screen uses the **External** audience and its publishing status is **Testing**, add every Google account that should sign in under **Test users**. Testing allows only those listed accounts. For broader access, complete any branding or verification steps requested by Google and publish the app to **Production**.
+4. Set these server-only Render variables and restart SoundProof:
 
    ~~~dotenv
+   PUBLIC_SITE_URL="https://soundproof-music-studio.onrender.com"
+   COOKIE_SECURE="true"
    GOOGLE_CLIENT_ID="YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
    GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
    ~~~
@@ -74,12 +77,12 @@ Google uses the server Authorization Code flow with a one-use state cookie, nonc
 Apple web sign-in cannot use `localhost` or an IP-address return URL. It requires a deployed HTTPS domain and an [Apple Developer Program](https://developer.apple.com/programs/) account. The Apple button therefore stays unavailable during ordinary localhost development.
 
 1. In Apple Certificates, Identifiers & Profiles, enable **Sign in with Apple** for a primary App ID.
-2. Create a **Services ID**, associate it with that App ID, and configure the deployed domain and exact return URL `https://YOUR-DOMAIN/api/auth/apple/callback`.
+2. Create a **Services ID**, associate it with that App ID, and configure the deployed domain `soundproof-music-studio.onrender.com` and exact return URL `https://soundproof-music-studio.onrender.com/api/auth/apple/callback`.
 3. Create a Sign in with Apple private key and download the `.p8` file. Record its Key ID and your ten-character Team ID.
 4. Set the Services ID as `APPLE_CLIENT_ID`. Put the private key in the environment as one line with literal `\n` separators, then restart:
 
    ~~~dotenv
-   PUBLIC_SITE_URL="https://YOUR-DOMAIN"
+   PUBLIC_SITE_URL="https://soundproof-music-studio.onrender.com"
    APPLE_CLIENT_ID="com.example.soundproof.web"
    APPLE_TEAM_ID="YOURTEAMID"
    APPLE_KEY_ID="YOURKEYID1"
@@ -148,7 +151,7 @@ SoundProof needs an Express web service, so the included `render.yaml` uses Rend
    ~~~
 
 3. In the [Render Dashboard](https://dashboard.render.com/), choose **New > Blueprint**, connect that repository, and apply `render.yaml`. It builds with `npm ci && npm run build`, starts with `npm start`, binds the Express server to Render’s `PORT`, and checks `/healthz`.
-4. Copy the assigned HTTPS origin, such as `https://soundproof-music-studio.onrender.com`. In the Render service’s **Environment** page, add `PUBLIC_SITE_URL` with that exact origin and no trailing slash. Redeploy so QR invitations, canonical metadata, Open Graph URLs, and the sitemap use the public address.
+4. This deployment's HTTPS origin is `https://soundproof-music-studio.onrender.com`. In the Render service’s **Environment** page, set `PUBLIC_SITE_URL` to that exact origin with no trailing slash. Redeploy so QR invitations, canonical metadata, Open Graph URLs, and the sitemap use the public address. A fork deployed at another hostname must use its own assigned origin everywhere these instructions show the SoundProof URL.
 5. Add `GEMINI_API_KEY` only if Kavi should use live Gemini. Keep `COOKIE_SECURE=true`; adjust `GEMINI_GLOBAL_REQUESTS_PER_HOUR` only if the provider quota and expected demo traffic justify it.
 6. To enable Google sign-in, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, then register the deployed callback shown above. To enable Apple sign-in, complete the Apple Developer setup and add all four `APPLE_*` values. Keep every secret out of `render.yaml` and source control.
 7. If cross-network phone pairing fails, add the `PHONE_MIC_ICE_SERVERS` TURN JSON described above and redeploy.

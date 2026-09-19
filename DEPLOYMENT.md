@@ -24,8 +24,8 @@ Create the empty repository on GitHub before the final two commands. Read `git s
 1. Sign in at [Render](https://dashboard.render.com/) and choose **New > Blueprint**.
 2. Connect the GitHub repository and select the repository containing `render.yaml`.
 3. Apply the Blueprint. It uses Node 22, runs `npm ci && npm run build`, starts with `npm start`, and checks `/healthz`.
-4. Wait for the first deployment. Open the assigned HTTPS URL and copy it, for example `https://soundproof-music-studio.onrender.com`.
-5. In the service’s **Environment** page, add `PUBLIC_SITE_URL` with that exact origin and no trailing slash. Trigger **Manual Deploy > Deploy latest commit**. This second build creates the canonical and social-image URLs.
+4. Wait for the first deployment. This SoundProof service uses `https://soundproof-music-studio.onrender.com` as its HTTPS origin. A fork deployed at another hostname must substitute its own assigned origin throughout this guide.
+5. In the service’s **Environment** page, set `PUBLIC_SITE_URL` to `https://soundproof-music-studio.onrender.com` with no trailing slash. Trigger **Manual Deploy > Deploy latest commit**. This second build creates the canonical and social-image URLs.
 
 AI singing has been removed from the interface and the server does not mount `/api/music`, so no music-provider environment setting can enable it accidentally. The free instrumental, lyric guide, phone/computer microphone recorder, Vocal Studio mixer, and WAV export work without music-provider billing. HTTPS gives browsers the secure context required for microphone permission.
 
@@ -43,15 +43,29 @@ Environment values stay on the server; never use a `VITE_` prefix for a key. `GE
 
 Password sign-in needs no external provider. The **Continue with email** path accepts an email or an existing studio name and remains available when social login is disabled.
 
-For Google, create a Web application OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials). Register this exact authorized redirect URI using the Render hostname:
+For Google, create a **Web application** OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials). Configure these exact fields for this deployment:
 
 ~~~text
-https://YOUR-DOMAIN/api/auth/google/callback
+Authorized JavaScript origin: https://soundproof-music-studio.onrender.com
+Authorized redirect URI: https://soundproof-music-studio.onrender.com/api/auth/google/callback
 ~~~
 
-Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Render’s **Environment** page. Google also supports `http://localhost:3000/api/auth/google/callback` for local testing. Restart or redeploy, then confirm the login page reports Google as ready.
+Enter both values exactly, with no trailing slash. For local testing, add `http://localhost:3000/api/auth/google/callback` as another authorized redirect URI.
 
-Apple requires an Apple Developer account, a Sign in with Apple-enabled primary App ID, an associated Services ID, and a Sign in with Apple private key. Configure the exact deployed domain and return URL `https://YOUR-DOMAIN/api/auth/apple/callback` in Certificates, Identifiers & Profiles. Apple does not accept localhost or IP-address return URLs, so test this provider only on the deployed HTTPS site. Set these Render secrets:
+If the OAuth consent screen has an **External** audience and remains in **Testing**, add every Google account that should sign in under **Test users**; unlisted accounts cannot complete sign-in. For broader access, complete any branding or verification steps Google requests and publish the app to **Production**.
+
+Add these values in Render’s **Environment** page, using the client ID and secret from that Web application client:
+
+~~~dotenv
+PUBLIC_SITE_URL="https://soundproof-music-studio.onrender.com"
+COOKIE_SECURE="true"
+GOOGLE_CLIENT_ID="YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
+~~~
+
+Restart or redeploy, then confirm the login page reports Google as ready.
+
+Apple requires an Apple Developer account, a Sign in with Apple-enabled primary App ID, an associated Services ID, and a Sign in with Apple private key. Configure the deployed domain `soundproof-music-studio.onrender.com` and exact return URL `https://soundproof-music-studio.onrender.com/api/auth/apple/callback` in Certificates, Identifiers & Profiles. Apple does not accept localhost or IP-address return URLs, so test this provider only on the deployed HTTPS site. Set these Render secrets:
 
 ~~~dotenv
 APPLE_CLIENT_ID="YOUR_SERVICES_ID"
@@ -118,7 +132,7 @@ Confirm the audit reports zero vulnerabilities, `.env.local` is ignored, product
 ## 8. Submit the site for search discovery
 
 1. Add the public HTTPS site as a property in [Google Search Console](https://search.google.com/search-console/about).
-2. Submit `https://YOUR-DOMAIN/sitemap.xml` in **Sitemaps**.
+2. Submit `https://soundproof-music-studio.onrender.com/sitemap.xml` in **Sitemaps**.
 3. Inspect the home URL and request indexing after the final deployment.
 4. Test the page in Google’s [Rich Results Test](https://search.google.com/test/rich-results). The page includes `SoftwareApplication` structured data with a free offer.
 5. Share a test link in a social-preview debugger and confirm the 1200×630 `og.png` image appears.
