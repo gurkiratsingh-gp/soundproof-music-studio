@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowUpRight, Eye, EyeOff, LoaderCircle, ArrowRight, Check, Mail, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, Eye, EyeOff, LoaderCircle, ArrowRight, Check, Mail, ChevronDown, AudioLines, Mic2, Music2, ShieldCheck } from 'lucide-react';
 import type { User } from '../types';
 
 type ProviderState = { configured: boolean; message: string };
@@ -64,18 +64,23 @@ export default function Login({ onLogin }: { onLogin: (user: User) => void }) {
   }
 
   return <main className="login-page">
-    <section className="login-story">
-      <Brand />
-      <div className="story-copy"><span className="eyebrow light">YOUR IDEAS. YOUR SOUND.</span><h1>A little thought.<br />A whole new <em>song.</em></h1><p>Turn the words in your head into the music you want to hear.</p></div>
+    <section className="login-story" aria-labelledby="landing-title">
+      <header className="landing-nav"><Brand /><a href="#sign-in" className="landing-signin-link">Open the studio <ArrowUpRight size={16} /></a></header>
+      <div className="story-copy"><span className="eyebrow light">YOUR IDEAS. YOUR SOUND.</span><h1 id="landing-title">A little thought.<br />A whole new <em>song.</em></h1><p>SoundProof helps you shape a song from your own idea, sing along to the beat, and make the music yours.</p><a className="landing-cta" href="#sign-in">Start creating <ArrowRight size={17} /></a></div>
       <div className="login-art-frame"><img src="/soundproof-studio.svg" alt="SoundProof waveform shield beside a vinyl record" /></div>
-      <div className="story-footer"><span><Check size={15} /> 31 languages, endless ideas</span><span>Made for your creativity</span></div>
+      <div className="landing-overview" id="how-it-works"><span className="eyebrow light">YOUR STUDIO, YOUR WAY</span><h2>From first idea to first take.</h2><div className="landing-feature-list">
+        <div className="landing-feature"><span className="landing-feature-icon"><AudioLines size={19} /></span><div><h3>Build an instrumental</h3><p>Choose a mood, genre, tempo, and instruments. Write a prompt and hear a playable track shaped by your choices.</p></div></div>
+        <div className="landing-feature"><span className="landing-feature-icon"><Music2 size={19} /></span><div><h3>Write and follow lyrics</h3><p>When AI is available, ask Kavi for lyrics in your language. Follow highlighted lines while the instrumental plays.</p></div></div>
+        <div className="landing-feature"><span className="landing-feature-icon"><Mic2 size={19} /></span><div><h3>Sing it your way</h3><p>Record your voice with a computer or phone mic, or make a pitch-adjusted karaoke backing from a song you upload.</p></div></div>
+      </div></div>
+      <div className="story-footer"><span><Check size={15} /> Create in many Indian languages</span><span>Made for your creativity</span></div>
     </section>
-    <section className="login-form-panel">
+    <section className="login-form-panel" id="sign-in" aria-labelledby="sign-in-title">
       <div className="login-switch">{emailOpen ? (register ? 'Already have an account?' : 'New to SoundProof?') : 'Secure access to your studio'} {emailOpen && <button className="text-button" onClick={() => { setRegister(!register); setError(''); }} disabled={busy}>{register ? 'Sign in' : 'Create an account'} <ArrowUpRight size={15} /></button>}</div>
-      <div className="login-form-wrap"><span className="eyebrow">YOUR PERSONAL MUSIC SPACE</span><h2>{emailOpen && register ? 'Find your sound.' : 'Welcome back.'}</h2><p className="muted">{emailOpen && register ? 'Create your account and give your next idea a melody.' : 'Choose a secure way to open your music studio.'}</p>
+      <div className="login-form-wrap"><span className="eyebrow">YOUR PERSONAL MUSIC SPACE</span><h2 id="sign-in-title">{emailOpen && register ? 'Find your sound.' : 'Welcome back.'}</h2><p className="muted">{emailOpen && register ? 'Create your account and give your next idea a melody.' : 'Choose a secure way to open your music studio.'}</p>
         {providerError && <p className="notice error login-auth-error" role="alert">{providerError}</p>}
         <div className="login-methods" aria-label="Sign-in options">
-          <button type="button" className="login-provider" onClick={() => startProvider('google')} disabled={!providers?.google.configured || busy} aria-describedby={!providers?.google.configured ? 'google-status' : undefined}>
+          <button type="button" className="login-provider" onClick={() => startProvider('google')} disabled={!providers?.google.configured || busy} aria-describedby={!providers?.google.configured ? 'google-status google-data-note' : 'google-data-note'}>
             <span className="provider-mark google-mark" aria-hidden="true">G</span><span>Continue with Google</span><ArrowRight size={17} />
           </button>
           {!providers?.google.configured && <p id="google-status" className="provider-status">{providers?.google.message || 'Checking Google sign-in configuration…'}</p>}
@@ -88,6 +93,7 @@ export default function Login({ onLogin }: { onLogin: (user: User) => void }) {
             <span className="provider-mark" aria-hidden="true"><Mail size={16} /></span><span>Continue with email</span><ChevronDown size={17} className={emailOpen ? 'open' : ''} />
           </button>
         </div>
+        <div className="google-data-note" id="google-data-note"><ShieldCheck size={17} aria-hidden="true" /><p>Google sign-in asks for your basic profile and email. SoundProof uses your account ID to recognize you, your name to label your studio, and your email for your account. It does not request access to your Drive or contacts. <a href="/privacy.html">How we use your data</a></p></div>
         {emailOpen && <form onSubmit={submit} className="login-form local-login-form">
           <label htmlFor="login-name">Email or studio name<input id="login-name" autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} placeholder="you@example.com or your studio name" maxLength={254} required disabled={busy} /></label>
           <label htmlFor="login-password">Password<div className="password-field"><input id="login-password" type={visible ? 'text' : 'password'} autoComplete={register ? 'new-password' : 'current-password'} value={password} onChange={event => setPassword(event.target.value)} placeholder={register ? 'Create a password (8+ characters)' : 'Enter your password'} minLength={8} maxLength={128} required disabled={busy} /><button type="button" className="icon-button" aria-label={visible ? 'Hide password' : 'Show password'} onClick={() => setVisible(!visible)}>{visible ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>
@@ -96,7 +102,7 @@ export default function Login({ onLogin }: { onLogin: (user: User) => void }) {
         </form>}
         <p className="login-note">Email and studio-name passwords belong to this SoundProof installation. Google and Apple accounts stay separate unless you explicitly add account linking in a future version. Your song library is saved in this browser.</p>
         <div className="login-features"><span><span className="mini-logo" aria-hidden="true">♪</span> Create music</span><span>✦ Write lyrics</span><span>♫ Make it yours</span></div>
-      </div><footer className="login-bottom">A space for the songwriter in everyone.<span>SOUNDPROOF / MUSIC STUDIO</span></footer>
+      </div><footer className="login-bottom"><span>A space for the songwriter in everyone.</span><nav aria-label="Legal information"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav></footer>
     </section>
   </main>;
 }

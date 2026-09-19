@@ -376,3 +376,33 @@ html[data-theme="dark"] .login-divider{color:#91a39d}
 html[data-theme="dark"] .login-divider::before,html[data-theme="dark"] .login-divider::after,html[data-theme="dark"] .local-login-form{border-color:#29413b;background-color:#29413b}
 html[data-theme="dark"] .local-login-form{background:transparent}
 @media(max-width:600px){.login-form-wrap{padding:28px 0}.login-methods{margin-top:23px}.login-provider{font-size:14px;min-height:52px}.provider-status{font-size:11px;margin-left:4px}.login-note{line-height:1.65}}
+
+/* Public home and sign-in */
+.landing-nav{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.landing-signin-link,.landing-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-size:12px;font-weight:650;color:#e6f7ef;border:1px solid #a9cbb973;border-radius:9px;padding:10px 13px;min-height:40px}
+.landing-signin-link:hover,.landing-cta:hover{background:#ffffff16;color:#fff}
+.landing-cta{margin-top:25px;background:#e8efdd;border-color:#e8efdd;color:#173f37;padding:12px 17px;min-height:45px}
+.landing-cta:hover{background:#fff9ed;color:#173f37}
+.landing-overview{position:relative;z-index:2;border-top:1px solid #d3e6d340;padding:31px 0 30px}
+.landing-overview h2{font-size:clamp(22px,2.2vw,31px);font-weight:550;margin:12px 0 21px;color:#f5f8ed}
+.landing-feature-list{display:grid;gap:11px}
+.landing-feature{display:flex;align-items:flex-start;gap:14px;padding:15px;border-radius:12px;border:1px solid #c2e3ce33;background:#ffffff0b}
+.landing-feature-icon{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:9px;background:#cee7d81e;color:#b2e8d2}
+.landing-feature h3{font-size:14px;letter-spacing:-.01em;font-weight:600;color:#f4f8ee}
+.landing-feature p{font-size:12px;line-height:1.55;color:#c5d9cc;margin-top:5px}
+.login-form-panel{align-self:start;position:sticky;top:0;height:100dvh;overflow-y:auto}
+.google-data-note{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:13px 14px;border-radius:10px;border:1px solid #d3ddd0;background:#eef3e8;color:#425b4d}
+.google-data-note>svg{flex:0 0 17px;margin-top:2px;color:#197665}
+.google-data-note p{font-size:11px;line-height:1.55}
+.google-data-note a{font-weight:650;text-underline-offset:2px}
+.login-bottom{align-items:center;font-size:11px}
+.login-bottom>span{font-size:11px;letter-spacing:normal}
+.login-bottom nav{display:flex;gap:15px}
+.login-bottom a{font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.login-bottom a:hover{color:var(--teal)}
+html[data-theme="dark"] .google-data-note{background:#142721;border-color:#2e5246;color:#c1d6ca}
+html[data-theme="dark"] .google-data-note>svg{color:#78d9bb}
+html[data-theme="dark"] .google-data-note a{color:#8ce8d0}
+html[data-theme="dark"] .login-bottom a:hover{color:#8ce8d0}
+@media(max-width:800px){.login-form-panel{position:static;height:auto;overflow:visible}.landing-nav{gap:12px}.landing-overview{padding-bottom:18px}.landing-feature-list{grid-template-columns:repeat(3,minmax(0,1fr))}.landing-feature{display:block;padding:13px}.landing-feature-icon{margin-bottom:12px}.login-story{min-height:auto}}
+@media(max-width:600px){.landing-nav .brand{font-size:25px}.landing-nav .brand-icon{width:35px;height:35px}.landing-signin-link{font-size:11px;padding:8px 10px}.landing-overview h2{font-size:23px}.landing-feature-list{grid-template-columns:1fr;gap:9px}.landing-feature{display:flex;padding:12px}.landing-feature-icon{margin-bottom:0}.landing-feature p{font-size:11px}.story-copy{margin-top:35px}.story-copy h1{font-size:clamp(34px,9vw,42px)}.login-bottom{align-items:flex-start;flex-wrap:wrap}.login-bottom nav{gap:18px}}

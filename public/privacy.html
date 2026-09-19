@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#0f6158" />
+  <title>Privacy — SoundProof</title>
+  <meta name="description" content="How SoundProof handles sign-in, song ideas, recordings, and phone microphone connections." />
+  <style>
+    :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.65; background: #f7f4ea; color: #17332f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header, footer { background: #e8efe7; }
+    header { border-bottom: 1px solid #cdded5; }
+    footer { border-top: 1px solid #cdded5; }
+    .wrap { width: min(100% - 2rem, 760px); margin: auto; }
+    header .wrap, footer .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; }
+    main { padding: 2.5rem 0 4rem; }
+    a { color: #0f6158; text-underline-offset: 3px; }
+    .brand { color: inherit; text-decoration: none; font-size: 1.25rem; font-weight: 800; letter-spacing: -.04em; }
+    h1, h2 { line-height: 1.2; letter-spacing: -.035em; }
+    h1 { font-size: clamp(2rem, 7vw, 3.3rem); margin: .35rem 0 1rem; }
+    h2 { margin: 2rem 0 .5rem; font-size: 1.3rem; }
+    p { margin: .6rem 0 1rem; }
+    .eyebrow { color: #53736d; font-size: .8rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    .updated { color: #58706c; font-size: .92rem; }
+    @media (prefers-color-scheme: dark) { :root { background: #111b1c; color: #e7f4ed; } header, footer { background: #182829; } header { border-color: #34504b; } footer { border-color: #34504b; } a { color: #88d9bb; } .eyebrow, .updated { color: #adcbc0; } }
+  </style>
+</head>
+<body>
+  <header><div class="wrap"><a class="brand" href="/">SoundProof.</a><a href="/">Back to the studio</a></div></header>
+  <main class="wrap">
+    <div class="eyebrow">Your music, your control</div>
+    <h1>Privacy at SoundProof</h1>
+    <p class="updated">Last updated September 19, 2026</p>
+    <p>SoundProof is a music-making demo where you can sketch songs, generate instrumental previews, work with Kavi, import audio for a karaoke track, and record your own voice. This notice explains what happens to your information when you use this installation.</p>
+
+    <h2>Sign-in information</h2>
+    <p>If you sign in with Google, SoundProof receives your Google account's stable identifier, display name, and verified email address. We use them only to create and recognize your SoundProof account. SoundProof does not request access to Gmail, Drive, contacts, or your Google password; it does not save Google access or refresh tokens. The Google consent screen may show your profile picture, but SoundProof does not use or store it.</p>
+    <p>If you use email or a studio name, the server stores your account identifier and a salted password hash, never your plain-text password. An essential, HttpOnly session cookie keeps you signed in for up to 24 hours. Account records are stored on the app server; session records are held in server memory.</p>
+
+    <h2>Your songs and recordings</h2>
+    <p>Your song library, lyrics, and activity list are saved in this browser's local storage. Vocal takes and processed karaoke tracks are saved in this browser's IndexedDB. Imported audio and recordings are processed in your browser; the raw files are not uploaded to SoundProof's server as part of those features. Clearing browser data can erase them. This demo does not provide a cloud backup or sync, so download anything you want to keep.</p>
+
+    <h2>AI requests</h2>
+    <p>When AI songwriting or Kavi is available and you choose to use it, your prompt, selected song details, and relevant chat context are sent through SoundProof's server to Google's Gemini service to produce a response. A local analysis of attached audio can contribute a written tempo or pitch estimate, but the raw audio is not sent with that request. AI features may be unavailable when the server's API key or quota is unavailable. Google's handling of the request is governed by its applicable service terms and policies.</p>
+
+    <h2>Phone microphone pairing</h2>
+    <p>Pairing a phone creates a short-lived connection record and signaling messages in server memory. Microphone audio travels through an encrypted WebRTC connection between the paired devices, or through a configured TURN relay when a direct connection is unavailable; the SoundProof app server does not save that audio. Connection services, including the default STUN server, can see network connection metadata such as IP addresses. Pairing records expire or are removed when the connection ends.</p>
+
+    <h2>Hosting, retention, and your choices</h2>
+    <p>The site is hosted on Render, which may process ordinary network and service logs to deliver it. SoundProof does not include advertising trackers or analytics in its application code. Account records remain while this installation retains them; its free hosting storage is temporary, so a restart or redeploy can also remove accounts. That can make a browser-local library inaccessible under its former account identifier. You can sign out, clear this site's browser storage, or ask for help with an account deletion request. There is currently no self-service account deletion or password reset.</p>
+    <p>For privacy questions or an account deletion request, email <a href="mailto:gurkiratsinghahedi@gmail.com">gurkiratsinghahedi@gmail.com</a>. Tell us which SoundProof account you mean; please do not email your password or private recordings.</p>
+  </main>
+  <footer><div class="wrap"><span>SoundProof music studio</span><a href="/terms.html">Terms of use</a></div></footer>
+</body>
+</html>

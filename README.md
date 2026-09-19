@@ -60,8 +60,9 @@ The startup page always offers **Continue with email**. It uses SoundProof’s e
 
 1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), configure the OAuth consent screen and create an **OAuth client ID > Web application**.
 2. Configure this deployment's Web application client with **Authorized JavaScript origin** `https://soundproof-music-studio.onrender.com` and **Authorized redirect URI** `https://soundproof-music-studio.onrender.com/api/auth/google/callback`. Enter both exactly, with no trailing slash. For local testing, add `http://localhost:3000/api/auth/google/callback` as another authorized redirect URI.
-3. If the consent screen uses the **External** audience and its publishing status is **Testing**, add every Google account that should sign in under **Test users**. Testing allows only those listed accounts. For broader access, complete any branding or verification steps requested by Google and publish the app to **Production**.
-4. Set these server-only Render variables and restart SoundProof:
+3. In **Branding**, set the application home page to `https://soundproof-music-studio.onrender.com/`, the privacy policy to `https://soundproof-music-studio.onrender.com/privacy.html`, and the terms of service to `https://soundproof-music-studio.onrender.com/terms.html`. These pages must be live before you submit them. Google may require domain ownership and brand verification; a custom domain you control can be needed for that review.
+4. If the consent screen uses the **External** audience and its publishing status is **Testing**, only listed **Test users** can sign in. For broader access, complete Google's branding or verification requirements and use **Publish app** to move to **In production**. A working button for the project owner does not establish public Google access.
+5. Set these server-only Render variables and restart SoundProof:
 
    ~~~dotenv
    PUBLIC_SITE_URL="https://soundproof-music-studio.onrender.com"

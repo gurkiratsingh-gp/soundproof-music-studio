@@ -52,7 +52,9 @@ Authorized redirect URI: https://soundproof-music-studio.onrender.com/api/auth/g
 
 Enter both values exactly, with no trailing slash. For local testing, add `http://localhost:3000/api/auth/google/callback` as another authorized redirect URI.
 
-If the OAuth consent screen has an **External** audience and remains in **Testing**, add every Google account that should sign in under **Test users**; unlisted accounts cannot complete sign-in. For broader access, complete any branding or verification steps Google requests and publish the app to **Production**.
+Before publishing Google login, use these public **Branding** links: home page `https://soundproof-music-studio.onrender.com/`, privacy policy `https://soundproof-music-studio.onrender.com/privacy.html`, and terms of service `https://soundproof-music-studio.onrender.com/terms.html`. Deploy and verify those pages first. Google may require domain ownership and brand verification; a custom domain you control can be needed for review.
+
+If the OAuth consent screen has an **External** audience and remains in **Testing**, only listed **Test users** can sign in. The owner successfully signing in does not establish that everyone can. For broader access, complete Google's branding or verification requirements and use **Publish app** to move to **In production**.
 
 Add these values in Render’s **Environment** page, using the client ID and secret from that Web application client:
 

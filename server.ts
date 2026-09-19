@@ -43,7 +43,7 @@ app.get('/robots.txt', (req, res) => {
 app.get('/sitemap.xml', (req, res) => {
   const origin = requestOrigin(req);
   if (!origin) return res.sendStatus(404);
-  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url></urlset>`);
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>${origin}/privacy.html</loc><changefreq>monthly</changefreq></url><url><loc>${origin}/terms.html</loc><changefreq>monthly</changefreq></url></urlset>`);
 });
 app.use(express.json({ limit: '64kb' }));
 const auth = createAuth({
