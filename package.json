@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "test": "tsx --test server/*.test.ts server/music/*.test.ts src/utils/*.test.ts",
     "test:audio": "node tests/audio-render.mjs",
-    "test:recording": "node tests/audio-render.mjs --recording"
+    "test:recording": "node tests/audio-render.mjs --recording",
+    "test:phone": "node tests/audio-render.mjs --phone"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

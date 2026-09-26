@@ -2,6 +2,8 @@
 
 SoundProof is a mobile-friendly songwriting and vocal practice studio. It creates varied procedural instrumentals, keeps lyrics in time with the beat, records and mixes the singer’s own voice, turns a permitted stereo recording into a pitch-shifted karaoke backing, and lets a phone or tablet act as a wireless microphone and recording remote.
 
+**Public demo:** [Open SoundProof](https://soundproof-music-studio.onrender.com/) · [Source code](https://github.com/gurkiratsingh-gp/soundproof-music-studio) · [College presentation guide](./COLLEGE_DEMO.md)
+
 The current interface deliberately does **not** offer paid AI vocal generation. Instrumentals, lyric timing, recording, mixing, karaoke processing, and WAV downloads work without a music-provider account. Gemini is used only for optional songwriting and Kavi chat replies.
 
 ## Main features
@@ -103,10 +105,14 @@ Phone microphone permission requires a secure browser context. `localhost` is tr
 3. Scan the QR code with the phone camera. Alternatively, open `/phone` on the same SoundProof site and enter the six-digit code.
 4. On the phone, choose whether to reduce room noise, then press **Allow mic & connect** and approve microphone permission.
 5. Back in **Sing it yourself**, select **Phone microphone**.
-6. Press **Arm start / stop on phone** on the computer. This deliberate local gesture also satisfies browser audio policies.
-7. Press **Start recording** or **Stop & save** on either device. The computer plays the backing and stores the take; the phone is not used as a loudspeaker.
+6. Press **Check phone microphone** on the computer and speak into the phone. Confirm the computer’s phone-input meter moves: connected controls alone do not prove voice is arriving.
+7. Press **Arm start / stop on phone** on the computer. This deliberate local gesture also satisfies browser audio policies.
+8. For the first test, clear **Include the backing in my saved take**, start from the phone, speak or sing for five seconds, then stop and save. Play the saved take on the computer and confirm you hear your own voice. Record another short take to confirm the connection remains usable.
+9. Enable the backing option if desired and record your performance. The computer plays the backing and stores the take; the phone is not used as a loudspeaker.
 
-Wear headphones connected to the computer to prevent backing-track leakage. The phone requests a mono 48 kHz capture when supported, disables browser auto-gain and echo cancellation, and offers optional room-noise reduction.
+Wear headphones connected to the computer to prevent backing-track leakage. Keep the phone page visible and the screen unlocked while checking or recording; locking the phone or switching apps can interrupt its microphone. The phone requests a mono 48 kHz capture when supported, disables browser auto-gain and echo cancellation, and offers optional room-noise reduction.
+
+If the phone meter moves but the computer meter does not, disconnect and create a fresh pairing on both devices after loading the latest deployment. If neither meter moves, check the phone browser’s microphone permission and selected audio device. Verify a voice-only take before relying on the feature during a presentation.
 
 The QR invitation uses a 256-bit one-time token stored in the URL fragment, so it is not sent in HTTP access logs or referrer headers. The manual code is single-use and rate-limited. Invitations expire after ten minutes; a successful connection lasts up to one hour. The signaling server stores only bounded offer/answer/ICE messages in memory. Audio is encrypted by WebRTC and travels directly where networking allows, or through the configured TURN relay; SoundProof never stores phone audio on the server.
 
@@ -163,13 +169,19 @@ Post-deploy checks:
 - `/robots.txt`, `/sitemap.xml`, `/site.webmanifest`, `/icon.svg`, and `/og.png` load.
 - Create and sign in to a demo account.
 - Create two different songs and verify the beats differ.
-- Pair a phone, select it in a song recorder, arm it, and save a short take.
+- Pair a phone, select it in a song recorder, check the computer input meter, and play back two short voice-only takes started and stopped from the phone.
 - Test Kavi with Hindi, Punjabi, Marathi, Telugu, Malayalam, or another native script.
 - Check Home, Dashboard, Create, Karaoke Track Lab, My library, Kavi assistant, Activity, and Settings at phone, tablet, and desktop widths.
 
-Render’s free web services are suitable for this college demonstration, but they spin down when idle and use an ephemeral filesystem. Server account hashes can disappear on a restart or redeploy; songs, backings, and recordings remain in each browser’s local storage/IndexedDB. A public multi-user product should use managed identity, a durable database/object store, shared rate limiting, spending limits, and managed TURN.
+Render’s free web services sleep when idle and lose local server files on restart, redeploy, or spin-down. This can erase SoundProof’s account file. Creative data stays in the browser, but a recreated account receives a new ID and cannot automatically reopen the old account’s library. Download backups. See [Render’s free instance limits](https://render.com/docs/free).
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for the release checklist and [PORTFOLIO.md](./PORTFOLIO.md) for an internship demo script.
+## Let other people try it
+
+Share the [public SoundProof link](https://soundproof-music-studio.onrender.com/), not `localhost`. Visitors can open it on their own computer or phone and create their own account through **Continue with email**; Google sign-in is also usable when the deployed provider is configured for public access. Apple remains unavailable until its separate setup is completed. Visitors do not need your API key, GitHub account, or your computer to stay on.
+
+Before sharing widely, test sign-up and Google login from a private window with a different Google account, complete the phone test above on the presentation network, and download a sample instrumental and vocal take. Share it as a college demo: libraries are browser-local, accounts currently lack durable storage, and live Kavi replies depend on the server’s Gemini configuration and quota. Durable identity/database storage, shared rate limiting, and managed TURN are the next steps for a dependable public product.
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for the release checklist, [COLLEGE_DEMO.md](./COLLEGE_DEMO.md) for a five-minute college presentation, and [PORTFOLIO.md](./PORTFOLIO.md) for internship talking points.
 
 ## Security review
 
@@ -198,8 +210,9 @@ npm run lint
 npm test
 npm run test:audio
 npm run test:recording
+npm run test:phone
 npm run build
 npm start
 ~~~
 
-The automated suite covers password and social authentication, OAuth state/replay/isolation, Kavi’s structured multilingual context, the 31-language validation contract, provider fixtures, varied procedural arrangements, audio click/clipping regressions, local recording/mixing, karaoke processing and quotas, synchronized lyrics, phone pairing abuse cases, credential separation, expiry, signal bounds, and ICE configuration. Browser audio tests use synthetic tones rather than real microphones, identity providers, or paid APIs.
+The automated suite covers password and social authentication, OAuth state/replay/isolation, Kavi’s structured multilingual context, the 31-language validation contract, provider fixtures, varied procedural arrangements, audio click/clipping regressions, local recording/mixing, karaoke processing and quotas, synchronized lyrics, phone pairing abuse cases, credential separation, expiry, signal bounds, and ICE configuration. Browser audio tests use synthetic tones rather than real microphones, identity providers, or paid APIs. `test:phone` sends a tone through real WebRTC peers and remote start/stop controls, decodes three saved takes to verify microphone audio with and without backing, and rejects a silent microphone even with audible backing. Real iPhone/Android hardware and classroom networks still need the manual check above.

@@ -64,7 +64,7 @@ export default function PhoneMicPanel({ phoneMic, compact = false }: { phoneMic:
     </div>}
 
     {state.phase === 'connected' && <div className="phone-connected" role="status">
-      <span><Check size={18} /></span><div><strong>{state.deviceName || 'Phone microphone'} is ready</strong><p>The phone source now appears in every song’s “Sing it yourself” recorder. Arm controls there before using Start on the phone.</p></div>
+      <span><Check size={18} /></span><div><strong>{state.deviceName || 'Phone microphone'} is connected</strong><p>Choose Phone microphone in “Sing it yourself”, then use Check phone microphone and speak to verify sound arrives. Arm controls before using Start on the phone.</p></div>
     </div>}
 
     {state.phase === 'reconnecting' && <div className="phone-loading" role="status"><LoaderCircle className="spin" size={22} /><div><strong>Restoring the phone connection…</strong><span>Controls are paused for a few seconds while WebRTC recovers.</span></div></div>}

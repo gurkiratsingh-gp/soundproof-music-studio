@@ -2,6 +2,14 @@
 
 This path uses Render because the project has an Express server, server-side sessions, WebRTC signaling routes, and a Vite frontend. The included `render.yaml` starts with free local instrumentals, phone/computer recording, the lyric guide, mixer, and WAV export. Gemini is optional and used only by Kavi and AI songwriting.
 
+## Share the existing public demo
+
+The visitor address is [https://soundproof-music-studio.onrender.com/](https://soundproof-music-studio.onrender.com/). Share this URL in a class group, project submission, or a QR code on your final slide. Your development computer does not need to remain on. Do not share the Render dashboard, your password, an API key, or a private phone-pairing QR code as the app’s public invitation.
+
+Each visitor should create their own account with **Continue with email**, or use Google when the deployed OAuth configuration is ready for public access. Verify Google with a different account in a private browser window; Apple needs its separate configuration. No verification email is sent by SoundProof’s current password-account flow. Test with a few classmates first and ask for the device/browser, steps, and expected versus actual result when something fails.
+
+Complete the deployed checks in section 6 before a college demonstration. [COLLEGE_DEMO.md](./COLLEGE_DEMO.md) includes the presentation sequence and a short technical explanation.
+
 ## 1. Prepare a GitHub repository
 
 Initialize the repository, then confirm `.env.local` is ignored and never commit an API key:
@@ -107,14 +115,14 @@ Then test this exact visitor flow in a private browser window:
 2. Create two songs from different prompts and confirm their instrumentals differ.
 3. Play the instrumental and confirm the lyric line and beat indicators advance.
 4. Set custom lyric timing by tapping each line.
-5. Open a song’s **Sing it yourself** recorder, create a phone connection there, scan it on a real iPhone/iPad/Android device, allow the microphone, and confirm the recorder shows Connected.
-6. In the song recorder select Phone microphone, arm remote controls on the computer, start and stop from the phone, and save the take.
+5. Use the same deployed HTTPS origin on both devices. Open a song’s **Sing it yourself** recorder, create a phone connection there, scan it on a real iPhone/iPad/Android device, and allow the microphone. Keep the phone page visible and its screen unlocked; use headphones connected to the computer.
+6. Select **Phone microphone**, press **Check phone microphone**, and speak into the phone. Confirm the input meter on the computer moves. Clear **Include the backing in my saved take**, arm remote controls on the computer, and start/stop a five-second take from the phone. Play it back and verify your voice is audible. Repeat a second take; a Connected label or working Start/Stop buttons alone is insufficient.
 7. Balance voice and instrumental in Vocal Studio, preview it, and download the final WAV.
 8. Attach that saved take in Kavi and generate an audio-matched instrumental.
-9. Test native-script Kavi input and output, then prepare and download the new instrumental WAV.
+9. If Gemini is configured, test native-script Kavi input and output, then prepare and download the new instrumental WAV. Otherwise verify the unavailable-provider message and continue with instrumental and recording features; do not present fallback text as a live AI result.
 10. Check Home, Dashboard, Create, Karaoke Track Lab, My library, Kavi assistant, Activity, and Settings at phone, tablet, and laptop widths.
 
-Free Render services can spin down while idle, so the first request may take longer. This server stores demo account hashes in `.data/accounts.json`; a free service’s filesystem is ephemeral, so accounts can disappear after a restart or redeploy. Browser songs and recordings remain local to the browser, but users may need to register again. State this as a demo limitation. A durable public version should move accounts to managed Postgres/object storage or attach a supported persistent disk.
+Free Render services sleep while idle and lose local files on spin-down, restart, or redeploy. SoundProof stores accounts in `.data/accounts.json`, so accounts can disappear. Songs and recordings remain browser-local, but a new account ID cannot automatically access the old library. Download backups and describe this as a demo limitation. Durable account storage is required before promising persistent public accounts.
 
 Official references: [deploy an Express app](https://render.com/docs/deploy-node-express-app), [Blueprint specification](https://render.com/docs/blueprint-spec), [health checks](https://render.com/docs/health-checks), [free instance limits](https://render.com/docs/free), and [persistent disks](https://render.com/docs/disks).
 
@@ -152,4 +160,6 @@ git commit -m "Describe the completed change"
 git push
 ~~~
 
-Render deploys the pushed commit automatically. Before an interview, open the site once, create a fresh demo account, generate one song, and test the phone pairing on the actual presentation network. Keep a computer-microphone take downloaded as a fallback.
+After pushing, check the Render service’s **Deploys** page. If the new commit has not deployed automatically, choose **Manual Deploy > Deploy latest commit**. Wait for the successful deployment and verify its commit matches the fix before asking phone users to reload and pair again. Auto-deploy depends on the service’s Git connection and settings; a successful push alone does not prove the public app changed. See [Render deployment options](https://render.com/docs/deploys).
+
+Before an interview, open the site once, create or sign in to a demo account, generate one song, and complete the microphone check and recorded-voice playback on the actual presentation network. Keep a downloaded instrumental, vocal take, and short screen recording as presentation backups.

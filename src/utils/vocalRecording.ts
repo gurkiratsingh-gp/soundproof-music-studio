@@ -33,6 +33,7 @@ export class VocalCapture {
   private startedAt = 0;
   private stoppedAt = 0;
   private interrupted = false;
+  private microphonePeak = 0;
   private failure?: string;
   private done?: Promise<RecordedAudio | null>;
   private resolveDone?: (audio: RecordedAudio | null) => void;
@@ -43,7 +44,8 @@ export class VocalCapture {
     onState: (phase: RecordingPhase, seconds: number) => void;
     onLevel: (level: number) => void;
     startBacking: () => void | Promise<void>;
-    getMicrophone?: () => Promise<MediaStream>; // Synthetic stream in regression tests.
+    getMicrophone?: () => Promise<MediaStream>; // A paired phone, or a synthetic test source.
+    requireMicrophoneSignal?: boolean;
     countdownSeconds?: number;
   }) {}
 
@@ -84,6 +86,7 @@ export class VocalCapture {
       this.meterTimer = setInterval(() => {
         analyser.getFloatTimeDomainData(samples);
         let peak = 0; for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
+        if (this.startedAt && !this.finishing) this.microphonePeak = Math.max(this.microphonePeak, peak);
         this.options.onLevel(Math.min(1, peak));
         if (this.startedAt && !this.finishing) this.options.onState('recording', Math.min(MAX_TAKE_SECONDS, (performance.now() - this.startedAt) / 1000));
       }, 100);
@@ -155,6 +158,11 @@ export class VocalCapture {
     // Some browsers omit WebM duration. Measure the actual encoded audio for
     // seeking, rather than including microphone/encoder startup latency.
     try { if (blob.size && this.tap) duration = (await this.tap.context.decodeAudioData(await blob.arrayBuffer())).duration; } catch { /* Retain the capture clock if this browser cannot decode its output here. */ }
+    // Measure the microphone branch, not the encoded mix: a loud backing must
+    // never make a silent phone microphone look like a successful vocal take.
+    if (this.options.requireMicrophoneSignal && this.microphonePeak < .0001 && !this.failure) {
+      this.failure = 'No sound reached the computer from your phone during this take. Keep the phone page open and unlocked, allow its microphone, then use Check phone microphone and speak before recording again.';
+    }
     if (this.failure || !blob.size || duration < .3) this.rejectDone?.(new Error(this.failure || 'That take was too short. Record for at least one second, then stop.'));
     else this.resolveDone?.({ blob, duration, interrupted: this.interrupted });
   }

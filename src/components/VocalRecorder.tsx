@@ -8,6 +8,7 @@ import type { KaraokeBackingTrack } from '../utils/karaokeStore';
 import type { LyricCue } from '../utils/lyricsTiming';
 import type { PhoneMicState, StudioPhoneMic } from '../utils/phoneCompanion';
 import PhoneMicPanel from './PhoneMicPanel';
+import PhoneMicrophoneCheck from './PhoneMicrophoneCheck';
 
 const clock = (value: number) => Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0');
 const NO_PHONE: PhoneMicState = { phase: 'idle', armed: false };
@@ -34,6 +35,8 @@ export default function VocalRecorder({ song, userId, engine, bpm, backingTrack,
   const [loading, setLoading] = useState(true);
   const [phoneState, setPhoneState] = useState<PhoneMicState>(() => phoneMic?.getSnapshot() || NO_PHONE);
   const [usePhoneMic, setUsePhoneMic] = useState(false);
+  const phoneSource = useRef(false);
+  const armAttempt = useRef(0);
   const capture = useRef<VocalCapture | null>(null);
   const alive = useRef(true);
   const callbacks = useRef({ onBusy, onSelect, onSaved }); callbacks.current = { onBusy, onSelect, onSaved };
@@ -76,7 +79,10 @@ export default function VocalRecorder({ song, userId, engine, bpm, backingTrack,
     return phoneMic.subscribe(update);
   }, [phoneMic]);
   useEffect(() => {
-    if (!phoneConnected && usePhoneMic) setUsePhoneMic(false);
+    // Keep the selected source after a dropout; never silently record the
+    // computer microphone when the singer selected their phone.
+    if (!phoneConnected) armAttempt.current++;
+    if (!phoneConnected && usePhoneMic) capture.current?.stop(true);
     if (!phoneConnected && phoneState.armed) phoneMic?.setArmed(false);
   }, [phoneConnected, phoneState.armed, phoneMic, usePhoneMic]);
   const recordAction = useRef<() => void>(() => undefined);
@@ -84,14 +90,15 @@ export default function VocalRecorder({ song, userId, engine, bpm, backingTrack,
     if (command === 'record-start') recordAction.current();
     else capture.current?.stop();
   }), [phoneMic]);
-  useEffect(() => () => { phoneMic?.setArmed(false); phoneMic?.sendStatus('idle'); }, [phoneMic]);
+  useEffect(() => () => { armAttempt.current++; phoneMic?.setArmed(false); phoneMic?.sendStatus('idle'); }, [phoneMic]);
 
   async function record() {
-    if (capture.current || busy || unsaved || backingLoading || backingUnavailable || (backingTrack && !backingUrl) || (usePhoneMic && !phoneConnected)) return;
+    if (capture.current || busy || disabled || loading || takes.length >= MAX_TAKES_PER_SONG || unsaved || backingLoading || backingUnavailable || (backingTrack && !backingUrl) || (usePhoneMic && !phoneConnected)) return;
     onPrepare(); setError(''); setNotice(''); setSeconds(0); setLevel(0); setPhase('permission'); onBusy(true);
     const session = new VocalCapture(engine, {
       includeInstrumental,
       getMicrophone: usePhoneMic ? phoneMic?.getMicrophoneStream : undefined,
+      requireMicrophoneSignal: usePhoneMic,
       onState: (state, value) => { if (alive.current && capture.current === session) { setPhase(state); setSeconds(value); phoneMic?.sendStatus(state === 'permission' ? 'countdown' : state); } },
       onLevel: value => { if (alive.current && capture.current === session) setLevel(value); },
       startBacking: () => {
@@ -118,19 +125,24 @@ export default function VocalRecorder({ song, userId, engine, bpm, backingTrack,
     } catch (error) { if (alive.current && capture.current === session) setError(microphoneError(error)); }
     finally { if (alive.current && capture.current === session) { capture.current = null; setPhase('idle'); setLevel(0); phoneMic?.sendStatus('idle'); onBusy(false); } }
   }
-  recordAction.current = () => { void record(); };
+  recordAction.current = () => { if (phoneSource.current && phoneMic?.getSnapshot().armed) void record(); };
   function cancel() { capture.current?.cancel(); capture.current = null; setPhase('idle'); setLevel(0); phoneMic?.sendStatus('idle'); setNotice('Recording cancelled. Your saved takes are unchanged.'); onBusy(false); }
   async function togglePhoneArm() {
     if (!phoneMic || !phoneConnected || busy) return;
+    const attempt = ++armAttempt.current;
+    const sessionId = phoneMic.getSnapshot().sessionId;
     if (!phoneState.armed) {
-      setUsePhoneMic(true);
       try {
-        await engine.prepare();
-        if (!alive.current || capture.current || phoneMic.getSnapshot().phase !== 'connected') return;
+        await Promise.all([engine.prepare(), phoneMic.prepareAudio()]);
+        if (!alive.current || attempt !== armAttempt.current || !phoneSource.current || capture.current || phoneMic.getSnapshot().phase !== 'connected' || phoneMic.getSnapshot().sessionId !== sessionId) return;
         phoneMic.setArmed(true); setNotice('Phone controls armed. Start the take from either device.');
       }
-      catch { setError('Audio could not be prepared. Press Play once, then arm phone controls again.'); }
+      catch (failure) { if (alive.current && attempt === armAttempt.current) setError(microphoneError(failure)); }
     } else { phoneMic.setArmed(false); setNotice('Phone controls disarmed.'); }
+  }
+  function selectMicrophone(phone: boolean) {
+    armAttempt.current++; phoneSource.current = phone; setUsePhoneMic(phone);
+    phoneMic?.setArmed(false);
   }
   async function remove() {
     if (!take || busy) return;
@@ -156,10 +168,12 @@ export default function VocalRecorder({ song, userId, engine, bpm, backingTrack,
     <div className="phone-recorder-source">
       <div><strong><Smartphone size={16} />Recording source</strong><span className={'badge ' + (phoneConnected ? '' : 'neutral')}>{phoneConnected ? (phoneState.deviceName || 'Phone connected') : 'Phone not paired'}</span></div>
       <div className="phone-source-options" aria-label="Choose recording microphone">
-        <button type="button" aria-pressed={!usePhoneMic} disabled={busy} onClick={() => { setUsePhoneMic(false); phoneMic?.setArmed(false); }}><Laptop size={15} /> This computer</button>
-        <button type="button" aria-pressed={usePhoneMic} disabled={busy || !phoneConnected} onClick={() => setUsePhoneMic(true)}><Smartphone size={15} /> Phone microphone</button>
+        <button type="button" aria-pressed={!usePhoneMic} disabled={busy} onClick={() => selectMicrophone(false)}><Laptop size={15} /> This computer</button>
+        <button type="button" aria-pressed={usePhoneMic} disabled={busy || !phoneConnected} onClick={() => selectMicrophone(true)}><Smartphone size={15} /> Phone microphone</button>
       </div>
+      {usePhoneMic && phoneMic && <PhoneMicrophoneCheck engine={engine} phoneMic={phoneMic} stream={phoneState.stream} disabled={busy || disabled || !phoneConnected} />}
       {usePhoneMic && phoneConnected && <button type="button" className={'button secondary small phone-arm-button ' + (phoneState.armed ? 'armed' : '')} disabled={busy} onClick={() => void togglePhoneArm()}><ShieldCheck size={15} />{phoneState.armed ? 'Phone controls armed' : 'Arm start / stop on phone'}</button>}
+      {usePhoneMic && !phoneConnected && <p className="notice error" role="alert">Phone microphone unavailable. Reconnect your phone or choose This computer to change the recording source.</p>}
       <p className="muted">{phoneConnected ? 'Choose the phone for its microphone. The computer still plays the instrumental and saves the take.' : 'Create a connection above to pair an iPhone, iPad, Android phone, or tablet without leaving this recorder.'}</p>
     </div>
     <label className="checkbox-label"><input type="checkbox" checked={includeInstrumental} disabled={busy || disabled || backingLoading || backingUnavailable} onChange={e => setIncludeInstrumental(e.target.checked)} />Include the backing in my saved take</label>
@@ -168,7 +182,7 @@ export default function VocalRecorder({ song, userId, engine, bpm, backingTrack,
     {backingUnavailable && <p className="notice error" role="alert">This song’s karaoke backing is missing from this browser. Restore it in Karaoke Track Lab before recording with it.</p>}
     <p className="recording-tip"><Headphones size={15} />Wear headphones to keep the backing track out of your microphone. Your mic is not played through speakers.</p>
     {busy && <div className="recording-live"><div role="status"><span className={phase === 'recording' ? 'record-dot live' : 'record-dot'} />{phase === 'permission' ? 'Allow microphone access in your browser…' : phase === 'countdown' ? 'Get ready… ' + seconds : phase === 'saving' ? 'Finishing your take…' : 'Recording · ' + clock(seconds) + ' / 1:00'}</div>{['countdown', 'recording'].includes(phase) && <><meter aria-label="Microphone input level" min={0} max={1} high={.85} value={level} /><p className="small-text">{level > .85 ? 'Too loud — move a little away from the mic.' : level < .01 ? 'Listening… sing a line to check the microphone.' : 'Your microphone is picking up sound.'}</p></>}</div>}
-    {phase === 'idle' ? <button className="button primary full" disabled={disabled || loading || backingLoading || backingUnavailable || Boolean(backingTrack && !backingUrl) || Boolean(unsaved) || takes.length >= MAX_TAKES_PER_SONG} onClick={() => void record()}><Mic2 size={17} />{takes.length ? 'Record a new take' : 'Record my vocals'}</button> : phase === 'recording' ? <button className="button record-stop full" onClick={() => capture.current?.stop()}><Square size={17} fill="currentColor" />Stop & save take</button> : phase === 'saving' ? <button className="button secondary full" disabled><LoaderCircle size={17} className="spin" />Saving take…</button> : <button className="button secondary full" onClick={cancel}>Cancel</button>}
+    {phase === 'idle' ? <button className="button primary full" disabled={disabled || loading || backingLoading || backingUnavailable || Boolean(backingTrack && !backingUrl) || Boolean(unsaved) || takes.length >= MAX_TAKES_PER_SONG || (usePhoneMic && !phoneConnected)} onClick={() => void record()}><Mic2 size={17} />{takes.length ? 'Record a new take' : 'Record my vocals'}</button> : phase === 'recording' ? <button className="button record-stop full" onClick={() => capture.current?.stop()}><Square size={17} fill="currentColor" />Stop & save take</button> : phase === 'saving' ? <button className="button secondary full" disabled><LoaderCircle size={17} className="spin" />Saving take…</button> : <button className="button secondary full" onClick={cancel}>Cancel</button>}
     {takes.length >= MAX_TAKES_PER_SONG && <p className="small-text">10 takes saved. Download and delete an older take to make room.</p>}
     {notice && <p className="small-text" role="status">{notice}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}

@@ -59,6 +59,7 @@ export class StudioPhoneMic {
   private commands = new Set<(command: PhoneControlCommand) => void>();
   private peer?: RTCPeerConnection;
   private channel?: RTCDataChannel;
+  private remoteAudio?: HTMLAudioElement;
   private abort?: AbortController;
   private pollAfter = 0;
   private phoneCandidates: RTCIceCandidateInit[] = [];
@@ -149,12 +150,20 @@ export class StudioPhoneMic {
     if (signal.type !== 'offer' || !signal.payload || typeof signal.payload !== 'object') return;
     const queuedCandidates = this.phoneCandidates.slice();
     this.closePeer();
-    this.patch({ phase: 'connecting', armed: false, error: undefined });
+    this.patch({ phase: 'connecting', armed: false, error: undefined, stream: undefined });
     const peer = new RTCPeerConnection({ iceServers }); this.peer = peer;
     peer.onicecandidate = event => { if (event.candidate && !abort.signal.aborted) void this.postSignal(sessionId, 'ice', { candidate: event.candidate.toJSON() }, abort.signal).catch(() => undefined); };
     peer.ontrack = event => {
+      if (this.peer !== peer || event.track.kind !== 'audio') return;
       const stream = event.streams[0] || new MediaStream([event.track]);
+      this.attachRemoteAudio(stream);
       this.patch({ stream }); this.updateConnected();
+      event.track.addEventListener('mute', () => {
+        if (this.peer === peer) this.beginReconnect(peer);
+      });
+      event.track.addEventListener('unmute', () => {
+        if (this.peer === peer) this.updateConnected();
+      });
       event.track.addEventListener('ended', () => {
         if (this.peer === peer) this.failConnection('The phone microphone stopped sharing audio. Create a new connection and try again.');
       }, { once: true });
@@ -212,8 +221,39 @@ export class StudioPhoneMic {
   }
 
   private hasLiveAudio() {
-    return Boolean(this.state.stream?.getAudioTracks().some(track => track.readyState === 'live'));
+    return Boolean(this.state.stream?.getAudioTracks().some(track => track.readyState === 'live' && track.enabled && !track.muted));
   }
+
+  private attachRemoteAudio(stream: MediaStream) {
+    this.releaseRemoteAudio();
+    // Chromium can deliver silent remote WebRTC audio to Web Audio until a
+    // media element drives playout (Chromium issue 40094084). Keep this sink
+    // attached to the ORIGINAL stream for the entire pairing, across takes.
+    // Muting the element never mutes the MediaStream used by the recorder.
+    const audio = document.createElement('audio');
+    audio.autoplay = true; audio.muted = true; audio.defaultMuted = true;
+    audio.volume = 0; audio.setAttribute('playsinline', '');
+    audio.srcObject = stream; this.remoteAudio = audio;
+    void audio.play().catch(() => { /* Retry in the user's check/arm/record gesture. */ });
+  }
+
+  private releaseRemoteAudio() {
+    const audio = this.remoteAudio; this.remoteAudio = undefined;
+    if (audio) { audio.pause(); audio.srcObject = null; audio.remove(); }
+  }
+
+  /** Retry playout from a desktop gesture without sending the mic to speakers. */
+  prepareAudio = async () => {
+    const audio = this.remoteAudio;
+    if (!audio || !this.hasLiveAudio() || this.state.phase !== 'connected') throw new Error('The phone is not sending microphone audio. Keep its page open and unlocked, then reconnect if needed.');
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([audio.play(), new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Phone audio did not start. Use Check phone microphone on the computer, or reconnect the phone.')), 4000);
+      })]);
+      if (audio !== this.remoteAudio) throw new Error('The phone disconnected while preparing its microphone. Reconnect and try again.');
+    } finally { clearTimeout(timeout); }
+  };
 
   private beginReconnect(peer: RTCPeerConnection) {
     if (this.peer !== peer) return;
@@ -255,8 +295,9 @@ export class StudioPhoneMic {
   }
 
   getMicrophoneStream = async () => {
-    const tracks = this.state.stream?.getAudioTracks().filter(track => track.readyState === 'live') || [];
-    if (!tracks.length) throw new Error('The phone microphone disconnected. Reconnect it in Settings and try again.');
+    await this.prepareAudio();
+    const tracks = this.state.stream?.getAudioTracks().filter(track => track.readyState === 'live' && track.enabled && !track.muted) || [];
+    if (!tracks.length) throw new Error('The phone microphone disconnected. Reconnect it in the recorder and try again.');
     // VocalCapture owns and stops the returned tracks, so clone the WebRTC track
     // and leave the companion connection alive for the next take.
     return new MediaStream(tracks.map(track => track.clone()));
@@ -272,6 +313,7 @@ export class StudioPhoneMic {
 
   private closePeer() {
     this.clearReconnectTimer();
+    this.releaseRemoteAudio();
     const channel = this.channel; const peer = this.peer;
     this.channel = undefined; this.peer = undefined;
     channel?.close(); peer?.close();

@@ -1,13 +1,14 @@
 import { build } from 'esbuild';
 import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 
 const baseline = process.argv.includes('--baseline');
 const recording = process.argv.includes('--recording');
-const directory = path.resolve(recording ? '.data/recording-quality' : '.data/audio-quality');
+const phone = process.argv.includes('--phone');
+const directory = path.resolve(phone ? '.data/phone-recording-quality' : recording ? '.data/recording-quality' : '.data/audio-quality');
 await mkdir(directory, { recursive: true });
 const profile = await mkdtemp(path.join(directory, 'browser-'));
 const browser = process.env.AUDIO_TEST_BROWSER || [
@@ -15,8 +16,25 @@ const browser = process.env.AUDIO_TEST_BROWSER || [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
 ].find(existsSync);
 if (!browser) throw new Error('Set AUDIO_TEST_BROWSER to a Chromium browser executable.');
-const entryPoint = path.resolve(recording ? 'tests/recording.browser.tsx' : 'tests/audio-render.browser.ts');
-const bundle = await build({ entryPoints: [entryPoint], absWorkingDir: process.cwd(), bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic', loader: { '.css': 'empty' } });
+const entryPoint = path.resolve(phone ? 'tests/phone-recording.browser.tsx' : recording ? 'tests/recording.browser.tsx' : 'tests/audio-render.browser.ts');
+// Reproduce the phone regression with the committed implementation without
+// rewriting any working-tree production files. All other recording code and
+// browser behavior stay identical between the before and after runs.
+const baselinePhoneSource = phone && baseline
+  ? execFileSync('git', ['show', 'HEAD:src/utils/phoneCompanion.ts'], { encoding: 'utf8', windowsHide: true })
+  : undefined;
+const bundle = await build({
+  entryPoints: [entryPoint], absWorkingDir: process.cwd(), bundle: true, write: false,
+  platform: 'browser', format: 'iife', jsx: 'automatic', loader: { '.css': 'empty' },
+  plugins: baselinePhoneSource ? [{
+    name: 'committed-phone-baseline',
+    setup(builder) {
+      builder.onLoad({ filter: /[\\/]src[\\/]utils[\\/]phoneCompanion\.ts$/ }, () => ({
+        contents: baselinePhoneSource, loader: 'ts', resolveDir: path.resolve('src/utils'),
+      }));
+    },
+  }] : [],
+});
 let resolveResult, rejectResult;
 const result = new Promise((resolve, reject) => { resolveResult = resolve; rejectResult = reject; });
 const server = createServer(async (request, response) => {
@@ -33,9 +51,9 @@ const server = createServer(async (request, response) => {
   } catch (error) { response.statusCode = 500; response.end('Test failed'); rejectResult(error); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const processHandle = spawn(browser, ['--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--disable-extensions', '--disable-sync', '--mute-audio', ...(recording ? ['--autoplay-policy=no-user-gesture-required'] : []), '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + (baseline ? '/?baseline=1' : '/')], { windowsHide: true, stdio: 'ignore' });
+const processHandle = spawn(browser, ['--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--disable-extensions', '--disable-sync', '--mute-audio', ...(recording || phone ? ['--autoplay-policy=no-user-gesture-required'] : []), '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + (baseline ? '/?baseline=1' : '/')], { windowsHide: true, stdio: 'ignore' });
 processHandle.once('error', rejectResult);
-const timeout = setTimeout(() => rejectResult(new Error('Offline audio test timed out.')), recording ? 60_000 : 45_000);
+const timeout = setTimeout(() => rejectResult(new Error('Offline audio test timed out.')), recording || phone ? 60_000 : 45_000);
 try {
   const report = await result;
   await writeFile(path.join(directory, baseline ? 'before.json' : 'after.json'), JSON.stringify(report, null, 2));

@@ -21,6 +21,7 @@ export default function PhoneCompanionPage() {
   const [phase, setPhase] = useState<Phase>('ready');
   const [error, setError] = useState('');
   const [level, setLevel] = useState(0);
+  const [micPaused, setMicPaused] = useState(false);
   const [armed, setArmed] = useState(false);
   const [recorder, setRecorder] = useState<Recorder>('idle');
   const [noiseReduction, setNoiseReduction] = useState(true);
@@ -105,9 +106,14 @@ export default function PhoneCompanionPage() {
         else if (health === 'failed') failConnection('The direct connection was lost. Return to SoundProof on the computer and create a new connection.');
         else if (connection.connectionState === 'disconnected') beginReconnect(connection, controls, controller);
       };
-      microphone.getAudioTracks().forEach(track => track.addEventListener('ended', () => {
-        if (peer.current === connection && !controller.signal.aborted) failConnection('This phone stopped sharing its microphone. Create a new connection and allow microphone access again.');
-      }, { once: true }));
+      setMicPaused(microphone.getAudioTracks().some(track => track.muted || !track.enabled));
+      microphone.getAudioTracks().forEach(track => {
+        track.addEventListener('ended', () => {
+          if (peer.current === connection && !controller.signal.aborted) failConnection('This phone stopped sharing its microphone. Create a new connection and allow microphone access again.');
+        }, { once: true });
+        track.addEventListener('mute', () => { if (peer.current === connection) setMicPaused(true); });
+        track.addEventListener('unmute', () => { if (peer.current === connection) setMicPaused(false); });
+      });
       connection.onicecandidate = event => { if (event.candidate && !controller.signal.aborted) void postSignal(joined.sessionId, joined.deviceToken, 'ice', { candidate: event.candidate.toJSON() }, controller.signal).catch(() => undefined); };
       await connection.setLocalDescription(await connection.createOffer({ offerToReceiveAudio: false }));
       const offerSdp = connection.localDescription?.sdp;
@@ -163,6 +169,9 @@ export default function PhoneCompanionPage() {
   function send(type: 'record-start' | 'record-stop') {
     setError('');
     if (!armed && type === 'record-start') { setError('Arm phone controls in the song recorder on your computer first.'); return; }
+    if (type === 'record-start' && !stream.current?.getAudioTracks().some(track => track.readyState === 'live' && track.enabled && !track.muted)) {
+      setError('The phone microphone is paused. Keep this page open and unlocked, close other apps using the microphone, and reconnect if needed.'); return;
+    }
     if (channel.current?.readyState === 'open') channel.current.send(JSON.stringify({ type }));
   }
 
@@ -204,7 +213,7 @@ export default function PhoneCompanionPage() {
     const controls = channel.current; const connection = peer.current;
     channel.current = null; peer.current = null;
     controls?.close(); connection?.close();
-    setLevel(0); setArmed(false); setRecorder('idle'); after.current = 0; studioCandidates.current = [];
+    setLevel(0); setMicPaused(false); setArmed(false); setRecorder('idle'); after.current = 0; studioCandidates.current = [];
   }
 
   async function disconnect(showReady = true, notifyServer = true) {
@@ -225,7 +234,7 @@ export default function PhoneCompanionPage() {
     <section className="phone-card">
       <div className="phone-hero-icon"><Mic2 size={27} /></div>
       <span className="eyebrow">SOUNDPROOF REMOTE MIC</span>
-      <h1>{phase === 'connected' ? 'Your phone mic is live.' : 'Turn this phone into your microphone.'}</h1>
+      <h1>{phase === 'connected' ? 'Your phone is connected.' : 'Turn this phone into your microphone.'}</h1>
       <p className="muted">Capture your voice on this device while SoundProof plays and saves the take on your computer.</p>
 
       {phase === 'ready' && <div className="phone-join">
@@ -238,8 +247,10 @@ export default function PhoneCompanionPage() {
 
       {phase === 'connected' && <div className="phone-remote">
         <div className="phone-meter"><span><AudioLines size={17} />Microphone level</span><meter aria-label="Phone microphone input level" min={0} max={1} high={.88} value={level} /></div>
+        <p className="small-text">Keep this page open and your screen unlocked. Before recording, use <strong>Check phone microphone</strong> on the computer and speak to confirm sound arrives there.</p>
+        {micPaused && <p className="notice error" role="alert">Your phone paused its microphone. Keep this page in front and close any other app using the microphone. Reconnect if the meter does not recover.</p>}
         <div className={'phone-arm-status ' + (armed ? 'armed' : '')}><span>{armed ? <CheckCircle2 size={18} /> : <ShieldCheck size={18} />}</span><div><strong>{armed ? 'Computer is armed' : 'Waiting for the computer'}</strong><small>{armed ? 'You can control this take here.' : 'Open a song, choose Phone microphone, then arm phone controls.'}</small></div></div>
-        {!busy ? <button className="phone-record-button" disabled={!armed} onClick={() => send('record-start')}><span><Mic2 size={28} /></span>Start recording</button>
+        {!busy ? <button className="phone-record-button" disabled={!armed || micPaused} onClick={() => send('record-start')}><span><Mic2 size={28} /></span>Start recording</button>
           : recorder === 'recording' ? <button className="phone-record-button stop" onClick={() => send('record-stop')}><span><Square size={26} fill="currentColor" /></span>Stop & save</button>
           : <button className="phone-record-button" disabled><span><LoaderCircle size={27} className="spin" /></span>{recorder === 'countdown' ? 'Get ready…' : 'Saving on computer…'}</button>}
         <button className="text-button danger-text" onClick={() => void disconnect()}><Unplug size={15} />Disconnect this phone</button>

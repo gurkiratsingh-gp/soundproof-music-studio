@@ -151,6 +151,7 @@ async function main() {
   let phoneStreamRequests = 0;
   let phoneCreates = 0;
   let phoneDisconnects = 0;
+  let preparePhoneAudio: () => Promise<void> = async () => {};
   const publishPhoneState = (next: PhoneMicState) => { phoneState = next; phoneListeners.forEach(listener => listener()); };
   const fakePhone = {
     getSnapshot: () => phoneState,
@@ -162,6 +163,7 @@ async function main() {
     },
     disconnect: async () => { phoneDisconnects++; publishPhoneState({ phase: 'idle', armed: false }); },
     setArmed: (armed: boolean) => { publishPhoneState({ ...phoneState, armed }); },
+    prepareAudio: () => preparePhoneAudio(),
     sendStatus: (status: string) => { phoneStatuses.push(status); },
     getMicrophoneStream: async () => { phoneStreamRequests++; return new MediaStream(remoteSource.getAudioTracks().map(track => track.clone())); },
   } as unknown as StudioPhoneMic;
@@ -177,7 +179,21 @@ async function main() {
   publishPhoneState({ phase: 'connected', armed: false, sessionId: 'phone-session', deviceName: 'Test phone', stream: remoteSource });
   await until(() => !!button('Phone microphone') && !button('Phone microphone')!.disabled, 'Connected phone microphone was not offered');
   button('Phone microphone')!.click();
-  await until(() => button('Phone microphone')?.getAttribute('aria-pressed') === 'true' && !!button('Arm start / stop on phone'), 'Phone microphone source was not selected'); button('Arm start / stop on phone')!.click();
+  await until(() => button('Phone microphone')?.getAttribute('aria-pressed') === 'true' && !!button('Check phone microphone'), 'Phone microphone source was not selected');
+  let finishArming!: () => void;
+  preparePhoneAudio = () => new Promise<void>(resolve => { finishArming = resolve; });
+  button('Arm start / stop on phone')!.click();
+  await until(() => !!finishArming, 'Arming did not prepare phone audio');
+  button('This computer')!.click(); finishArming();
+  await until(() => button('This computer')?.getAttribute('aria-pressed') === 'true', 'Computer source was not selected');
+  check(!phoneState.armed, 'Stale arm request enabled remote controls after switching to the computer');
+  preparePhoneAudio = async () => {};
+  button('Phone microphone')!.click();
+  await until(() => !!button('Check phone microphone'), 'Phone check did not return after selecting the phone');
+  button('Check phone microphone')!.click();
+  await until(() => container.textContent!.includes('Sound received.'), 'Desktop sound check did not verify the received microphone');
+  check(remoteSource.getAudioTracks().every(track => track.readyState === 'live'), 'Checking the mic stopped the persistent source');
+  button('Arm start / stop on phone')!.click();
   await until(() => phoneState.armed && container.textContent!.includes('Phone controls armed'), 'Phone controls did not enter the armed state');
   check(phoneCommands.size === 1, 'Recorder did not subscribe to phone controls');
   phoneCommands.forEach(listener => listener('record-start'));
@@ -186,11 +202,14 @@ async function main() {
   await delay(700);
   phoneCommands.forEach(listener => listener('record-stop'));
   await until(() => phoneSaves === 1 && container.textContent!.includes('Take saved'), 'Remote phone stop did not save the take', 7000);
-  check(phoneStreamRequests === 1, 'Recorder did not use the paired phone stream');
+  check(phoneStreamRequests === 2, 'Check and recorder did not use the paired phone stream');
+  const phoneTakes = await listTakes('phone-test', initialSongs[1].id);
+  check(phoneTakes.length === 1 && (await metrics(phoneTakes[0].blob)).rms > .01, 'Saved phone take had no decodable audio');
   check(remoteSource.getAudioTracks().every(track => track.readyState === 'live'), 'Saving a take stopped the persistent WebRTC source');
   check(phoneStatuses.includes('recording') && phoneStatuses.includes('saving') && phoneStatuses.at(-1) === 'idle', 'Recorder state was not returned to the phone');
   button('Disconnect phone')!.click();
   await until(() => phoneDisconnects === 1 && !!button('Create phone connection'), 'Phone could not be disconnected from the vocal recorder');
+  check(button('Phone microphone')?.getAttribute('aria-pressed') === 'true' && button('Record a new take')?.disabled, 'Phone dropout silently switched recording to the computer microphone');
   results.push({ name: 'inline-phone-pairing-remote-start-stop-disconnect-and-track-cloning' });
 
   root.render(<div />); await delay(80);
